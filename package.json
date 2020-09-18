@@ -4,22 +4,23 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node -r dotenv/config test/test.js",
     "watch": "tsc -w",
-    "lint": "tslint '*.ts'"
+    "lint": "tslint '*.ts'",
+    "deploy": "dotenv.cmd serverless deploy"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.62",
     "@types/aws-sdk": "0.0.42",
+    "@types/mongodb": "^3.5.27",
     "@types/node": "^7.0.5",
-    "serverless-plugin-typescript": "^1.1.9",
-    "tslint": "^5.5.0",
-    "tslint-config-standard": "^6.0.1",
-    "typescript": "^2.9.2"
+    "dotenv": "^8.2.0"
   },
   "dependencies": {
+    "mongodb": "^3.6.2",
     "uuid": "^3.1.0"
   }
 }

@@ -1,3 +1,4 @@
 *.js
+.env
 .serverless
 node_modules
