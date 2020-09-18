@@ -12,3 +12,8 @@
 * open-source-calendar-crawler-cloudwatch-event
     * sends SQS message to queue with body { site: 'ALL' }
     * terraformed
+
+* open-source-calendar-website
+   * use custom domain https://opensourcecalendar.com
+   * host on either github pages or aws s3
+   * auto update site when code checked into main branch
