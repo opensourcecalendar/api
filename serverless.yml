@@ -12,6 +12,6 @@ functions:
     handler: handler.list
     events:
       - http:
-          path: todos
+          path: events
           method: get
           cors: true
