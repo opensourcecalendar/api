@@ -12,7 +12,6 @@ const MONGODB_URI = process.env.MONGODB_URI; // or Atlas connection string
         console.log(results);
         client.close();
     } catch (e) {
-        // Deal with the fact the chain failed
         console.error('Error happened', e);
         client.close();
     }

@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node -r dotenv/config test/test.js",
-    "deploy": "dotenv.cmd serverless deploy"
+    "lint": "tslint -p tsconfig.json -c tslint.json",
+    "local": "dotenv.cmd serverless offline",
+    "deploy": "dotenv.cmd serverless deploy",
+    "test": "node -r dotenv/config test/test.js"
   },
   "keywords": [],
   "author": "",
@@ -15,7 +17,14 @@
     "@types/aws-sdk": "0.0.42",
     "@types/mongodb": "^3.5.27",
     "@types/node": "^7.0.5",
-    "dotenv": "^8.2.0"
+    "aws-lambda": "^1.0.6",
+    "dotenv": "^8.2.0",
+    "serverless-offline": "^6.7.0",
+    "serverless-plugin-typescript": "^1.1.9",
+    "ts-node": "^9.0.0",
+    "tslint": "^6.1.3",
+    "tslint-config-airbnb": "^5.11.2",
+    "typescript": "^4.0.3"
   },
   "dependencies": {
     "mongodb": "^3.6.2",

@@ -7,6 +7,10 @@ provider:
   environment:
     MONGODB_URI: ${env:MONGODB_URI}
 
+plugins:
+  - serverless-plugin-typescript 
+  - serverless-offline
+
 functions:
   list:
     handler: handler.list
