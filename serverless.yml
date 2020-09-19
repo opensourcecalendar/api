@@ -19,3 +19,11 @@ functions:
           path: events
           method: get
           cors: true
+  crawl:
+    handler: handler.crawl
+    events:
+      - schedule: rate(10080 minutes)
+      - http:
+          path: crawl
+          method: get
+          cors: true

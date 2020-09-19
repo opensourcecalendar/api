@@ -7,7 +7,7 @@
     "lint": "tslint -p tsconfig.json -c tslint.json",
     "local": "dotenv.cmd serverless offline",
     "deploy": "dotenv.cmd serverless deploy",
-    "test": "node -r dotenv/config test/test.js"
+    "test": "dotenv.cmd node test/test.js"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +27,7 @@
     "typescript": "^4.0.3"
   },
   "dependencies": {
+    "axios": "^0.20.0",
     "mongodb": "^3.6.2",
     "uuid": "^3.1.0"
   }
