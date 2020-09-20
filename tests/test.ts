@@ -6,8 +6,8 @@ const MONGODB_URI = process.env.MONGODB_URI; // or Atlas connection string
     let client = null;
     try {
         client = await MongoClient.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-        const db = client.db('open-source-calendar');
-        const results = await db.collection('open-source-calendar').find().toArray();
+        const db = client.db('osevents');
+        const results = await db.collection('events').find().toArray();
 
         console.log(results);
         client.close();

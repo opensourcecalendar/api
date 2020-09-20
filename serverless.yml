@@ -1,4 +1,4 @@
-service: opensource-calendar-api
+service: osevents-api
 
 provider:
   name: aws
@@ -10,6 +10,7 @@ provider:
 plugins:
   - serverless-plugin-typescript 
   - serverless-offline
+  - serverless-domain-manager # https://seed.run/blog/how-to-set-up-a-custom-domain-name-for-api-gateway-in-your-serverless-app.html
 
 functions:
   list:
@@ -27,3 +28,7 @@ functions:
           path: crawl
           method: get
           cors: true
+
+custom:
+  customDomain:
+    domainName: api.osevents.io
