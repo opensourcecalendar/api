@@ -4,8 +4,6 @@ import { MongoClient, Db } from 'mongodb';
 import axios from 'axios';
 import { addDays, format, parseISO } from 'date-fns';
 import { createHash } from 'crypto';
-import { openStdin } from 'process';
-import { O_NOATIME } from 'constants';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) console.error('MONGODB_URI NOT SET');
@@ -20,7 +18,7 @@ async function connectToDatabase(uri: string) {
 
   console.log(`=> connect to database with uri ${uri}`);
   const client = await MongoClient.connect(uri, { useUnifiedTopology: true, useNewUrlParser: true });
-  cachedDb = client.db('open-source-calendar');
+  cachedDb = client.db('osevents');
   return cachedDb;
 }
 
@@ -61,16 +59,18 @@ export const crawl: ScheduledHandler = async (_event, context) => {
 
       const db = await connectToDatabase(MONGODB_URI);
 
-      const bulkWriteItems = items.map(item=> {
-        return { insertOne:
+      const bulkWriteItems = items.map(item => {
+        return {
+          updateOne:
           {
-            "document": item,
+            "filter": { hash: item.hash },
+            "update": item,
+            "upsert": true,
           }
         };
-      })
+      });
 
-
-      const result = await db.collection('events').bulkWrite(bulkWriteItems);
+      const result = await db.collection('events').bulkWrite(bulkWriteItems, { ordered: false });
       console.log(JSON.stringify(result, null, 2));
     }
   }
@@ -131,8 +131,8 @@ export interface OSEventsEvent {
   title: string;
   description: string;
   eventSchedule: any;
-  extra: {[key:string]: any };
-  image: {url: string; width: number; height:number;};
+  extra: { [key: string]: any };
+  image: { url: string; width: number; height: number; };
   location: string;
   locationCoord: number[];
   hash?: string;
