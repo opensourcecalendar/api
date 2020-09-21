@@ -22,14 +22,12 @@ async function connectToDatabase(uri: string) {
   return cachedDb;
 }
 
-export const list: APIGatewayProxyHandler = async (event, context) => {
+export const list: APIGatewayProxyHandler = async (_event, context) => {
   try {
     context.callbackWaitsForEmptyEventLoop = false;
-    console.log('event: ', JSON.stringify(event, null, 2));
-    console.log('context: ', JSON.stringify(context, null, 2));
 
     const db = await connectToDatabase(MONGODB_URI);
-    const results = await db.collection('open-source-calendar').find({}).toArray();
+    const results = await db.collection('events').find({}).toArray();
     return {
       statusCode: 200,
       body: JSON.stringify(results),
