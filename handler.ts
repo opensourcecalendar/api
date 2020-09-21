@@ -52,30 +52,21 @@ export const crawl: ScheduledHandler = async (_event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
 
     const crawlers: ICrawler[] = [new MercerCountyParkCrawler()];
+    const crawlPromises = crawlers.map(crawler => crawler.crawl()).flat();
+    const items = (await Promise.all(crawlPromises)).flat();
 
-    for (let i = 0; i < crawlers.length; i++) {
-      const items = await crawlers[i].crawl();
-      console.log(JSON.stringify(items, null, 2));
+    console.log(`=> Saving ${items.length} items`);
+    const db = await connectToDatabase(MONGODB_URI);
+    const collection = db.collection('events');
 
-      const db = await connectToDatabase(MONGODB_URI);
-
-      const bulkWriteItems = items.map(item => {
-        return {
-          updateOne:
-          {
-            "filter": { hash: item.hash },
-            "update": item,
-            "upsert": true,
-          }
-        };
-      });
-
-      const result = await db.collection('events').bulkWrite(bulkWriteItems, { ordered: false });
-      console.log(JSON.stringify(result, null, 2));
+    try {
+      await collection.insertMany(items, { ordered: false });
+    } catch (e) {
+      if (e.toString().indexOf('E11000') < 0) throw e;
     }
   }
   catch (e) {
-    console.error('unhandled error', e);
+    console.error('=> unhandled error', e);
   }
 }
 
@@ -87,8 +78,8 @@ export class MercerCountyParkCrawler implements ICrawler {
   async crawl() {
     const today = new Date();
     const body = {
-      "start_date": format(today, 'YYYY-MM-DD'),
-      "end_date": format(addDays(today, 30), 'YYYY-MM-DD')
+      "start_date": format(today, 'yyyy-MM-dd'),
+      "end_date": format(addDays(today, 30), 'yyyy-MM-dd')
     };
 
     const url = 'https://mercercountyparks.org/api/events-by-date/list/';
