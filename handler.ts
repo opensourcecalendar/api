@@ -63,7 +63,12 @@ export const list: APIGatewayProxyHandler = async (event, context) => {
 
     return {
       statusCode: 200,
-      headers: { "X-Pagination-Next": nextNext },
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': true,
+        'Access-Control-Expose-Headers': 'X-Pagination-Next',
+        'X-Pagination-Next': nextNext,
+      },
       body: JSON.stringify(items),
     };
 
