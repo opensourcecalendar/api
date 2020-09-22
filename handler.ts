@@ -69,7 +69,7 @@ export const list: APIGatewayProxyHandler = async (event, context) => {
         'Access-Control-Expose-Headers': 'X-Pagination-Next',
         'X-Pagination-Next': nextNext,
       },
-      body: JSON.stringify(items, null, 2),
+      body: JSON.stringify(items),
     };
 
   } catch (e) {
