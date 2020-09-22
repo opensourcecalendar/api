@@ -119,7 +119,7 @@ function getNext(results: OSEventsEvent[]) {
   const lastItem = results.length > 0 ? results[results.length - 1] : null;
 
   if (lastItem == null) return null;
-  return `${lastItem._id}_${lastItem.startDate}`;
+  return `${lastItem.startDate.getTime()}_${lastItem._id}`;
 }
 
 export const crawl: ScheduledHandler = async (_event, context) => {
