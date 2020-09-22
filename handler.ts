@@ -30,39 +30,20 @@ export const list: APIGatewayProxyHandler = async (event, context) => {
   try {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    let qs = event.queryStringParameters || {};
-
-    let limit = +(qs.limit || LIMIT_DEFAULT);
-    limit = Math.min(Math.max(LIMIT_MIN, limit), LIMIT_MAX);
-
-    let next = null;
-
-    try {
-      next = qs.next ? new ObjectId(qs.next) : null;
-    }
-    catch (e) {
-      return {
-        statusCode: 400,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Credentials': true
-        },
-        body: JSON.stringify({ message: 'Invalid next token' })
-      };
-    }
+    const filter = getFilter(event.queryStringParameters);
+    const limit = getLimit(event.queryStringParameters);
+    const sort = { startDate: -1, _id: -1 };
 
     const db = await connectToDatabase(MONGODB_URI);
-    const findQuery = next ? { _id: { $lt: new ObjectId(next) } } : {};
 
-    const results: { _id: any, hash: string, startDate: Date, endDate: Date }[] = await db.collection('events')
-      .find(findQuery)
-      .sort({ _id: -1 })
+    // pagination based on this blog entry - https://engineering.mixmax.com/blog/api-paging-built-the-right-way/
+    const results: OSEventsEvent[] = await db.collection('events')
+      .find(filter)
+      .sort(sort)
       .limit(limit)
       .toArray();
 
-    const nextNext = results.length > 0 ? results[results.length - 1]._id : null;
-
-    // remove _id property
+    // remove _id and hash properties
     const items = results.map(({ _id, hash, ...keepAttrs }) => keepAttrs)
 
     return {
@@ -71,7 +52,7 @@ export const list: APIGatewayProxyHandler = async (event, context) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Credentials': true,
         'Access-Control-Expose-Headers': 'X-Pagination-Next',
-        'X-Pagination-Next': nextNext,
+        'X-Pagination-Next': getNext(results),
       },
       body: JSON.stringify(items, null, 2),
     };
@@ -91,6 +72,55 @@ export const list: APIGatewayProxyHandler = async (event, context) => {
     };
   }
 };
+
+function getLimit(queryStringParameters: { [name: string]: string } | null) {
+  if (queryStringParameters == null || !queryStringParameters.limit) return LIMIT_DEFAULT;
+  
+  let limit = +(queryStringParameters.limit || LIMIT_DEFAULT);
+  limit = Math.min(Math.max(LIMIT_MIN, limit), LIMIT_MAX);
+
+  return limit;
+}
+
+function getFilter(queryStringParameters: { [name: string]: string } | null) {
+  if (queryStringParameters == null || !queryStringParameters.next) return {};
+
+  const [nextStartDate, nextId] = queryStringParameters.next.split('_');
+  if (!nextStartDate || !nextId) return {};
+
+  let id = null;
+  let date = null;
+
+  try{
+    date = new Date(nextStartDate);
+  } catch(e) { 
+    throw new Error('Bad Start Date ' + nextStartDate)
+  }
+  try {
+    id = new ObjectId(nextId);
+  } catch (e) {
+    throw new Error('Bad Id ' + nextId)
+  }
+
+  const filter = {
+    $or: [{
+      startDate: { $lt: date }
+    }, {
+      // If the startDate is an exact match, we need a tiebreaker, so we use the _id field from the cursor.
+      startDate: date,
+      _id: { $lt: id }
+    }]
+  };
+
+  return filter;
+}
+
+function getNext(results: OSEventsEvent[]) {
+  const lastItem = results.length > 0 ? results[results.length - 1] : null;
+
+  if (lastItem == null) return null;
+  return `${lastItem._id}_${lastItem.startDate}`;
+}
 
 export const crawl: ScheduledHandler = async (_event, context) => {
   try {
@@ -124,8 +154,8 @@ export class MercerCountyParkCrawler implements ICrawler {
   async crawl() {
     const today = new Date();
     const body = {
-      "start_date": format(today, 'yyyy-MM-dd'),
-      "end_date": format(addDays(today, 30), 'yyyy-MM-dd')
+      'start_date': format(today, 'yyyy-MM-dd'),
+      'end_date': format(addDays(today, 30), 'yyyy-MM-dd')
     };
 
     const url = 'https://mercercountyparks.org/api/events-by-date/list/';
@@ -163,6 +193,7 @@ export class MercerCountyParkCrawler implements ICrawler {
 }
 
 export interface OSEventsEvent {
+  _id?: string,
   startDate: Date;
   endDate: Date;
   title: string;
