@@ -92,7 +92,7 @@ function getFilter(queryStringParameters: { [name: string]: string } | null) {
   let date = null;
 
   try{
-    date = new Date(nextStartDate);
+    date = new Date(+nextStartDate);
   } catch(e) { 
     throw new Error('Bad Start Date ' + nextStartDate)
   }
