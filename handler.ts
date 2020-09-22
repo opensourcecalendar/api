@@ -30,24 +30,41 @@ export const list: APIGatewayProxyHandler = async (event, context) => {
   try {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    let qs = event.queryStringParameters || { };
+    let qs = event.queryStringParameters || {};
 
     let limit = +(qs.limit || LIMIT_DEFAULT);
     limit = Math.min(Math.max(LIMIT_MIN, limit), LIMIT_MAX);
 
-    let next = qs.next;
+    let next = null;
+
+    try {
+      next = qs.next ? new ObjectId(qs.next) : null;
+    }
+    catch (e) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: 'Invalid next token' })
+      };
+    }
 
     const db = await connectToDatabase(MONGODB_URI);
     const findQuery = next ? { _id: { $lt: new ObjectId(next) } } : {};
 
-    const results = await db.collection('events').find(findQuery).sort({ _id: -1 }).limit(limit).toArray();
+    const results: { _id: any, hash: string, startDate: Date, endDate: Date }[] = await db.collection('events')
+      .find(findQuery)
+      .sort({ _id: -1 })
+      .limit(limit)
+      .toArray();
 
     const nextNext = results.length > 0 ? results[results.length - 1]._id : null;
 
+    // remove _id property
+    const items = results.map(({ _id, hash, ...keepAttrs }) => keepAttrs)
+
     return {
       statusCode: 200,
-      headers: { "X-Pagination-Next" : nextNext },
-      body: JSON.stringify(results),
+      headers: { "X-Pagination-Next": nextNext },
+      body: JSON.stringify(items),
     };
 
   } catch (e) {
@@ -77,6 +94,7 @@ export const crawl: ScheduledHandler = async (_event, context) => {
     try {
       await collection.insertMany(items, { ordered: false });
     } catch (e) {
+      // duplicate index broke - throw error
       if (e.toString().indexOf('E11000') < 0) throw e;
     }
   }
