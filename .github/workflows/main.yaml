@@ -9,6 +9,7 @@ jobs:
   deploy:
     name: deploy
     runs-on: ubuntu-latest
+    if: "! contains(toJSON(github.event.commits.*.message), '[skip-ci]')" 
     strategy:
       matrix:
         node-version: [12.x]
