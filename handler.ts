@@ -22,7 +22,7 @@ async function connectToDatabase(uri: string) {
   return cachedDb;
 }
 
-const LIMIT_DEFAULT = 10;
+const LIMIT_DEFAULT = 20;
 const LIMIT_MAX = 100;
 const LIMIT_MIN = 1;
 
