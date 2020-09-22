@@ -43,6 +43,10 @@ export const list: APIGatewayProxyHandler = async (event, context) => {
     catch (e) {
       return {
         statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': true
+        },
         body: JSON.stringify({ message: 'Invalid next token' })
       };
     }
@@ -69,13 +73,17 @@ export const list: APIGatewayProxyHandler = async (event, context) => {
         'Access-Control-Expose-Headers': 'X-Pagination-Next',
         'X-Pagination-Next': nextNext,
       },
-      body: JSON.stringify(items),
+      body: JSON.stringify(items, null, 2),
     };
 
   } catch (e) {
     console.error('unhandled error', e);
     return {
       statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': true
+      },
       body: JSON.stringify({
         error: e,
         message: 'unhandled error'
