@@ -1,6 +1,6 @@
 import { APIGatewayProxyHandler, ScheduledHandler } from 'aws-lambda';
 
-import { MongoClient, Db } from 'mongodb';
+import { MongoClient, Db, ObjectId } from 'mongodb';
 import axios from 'axios';
 import { addDays, format, parseISO } from 'date-fns';
 import { createHash } from 'crypto';
@@ -22,14 +22,31 @@ async function connectToDatabase(uri: string) {
   return cachedDb;
 }
 
-export const list: APIGatewayProxyHandler = async (_event, context) => {
+const LIMIT_DEFAULT = 10;
+const LIMIT_MAX = 100;
+const LIMIT_MIN = 1;
+
+export const list: APIGatewayProxyHandler = async (event, context) => {
   try {
     context.callbackWaitsForEmptyEventLoop = false;
 
+    let qs = event.queryStringParameters || { };
+
+    let limit = +(qs.limit || LIMIT_DEFAULT);
+    limit = Math.min(Math.max(LIMIT_MIN, limit), LIMIT_MAX);
+
+    let next = qs.next;
+
     const db = await connectToDatabase(MONGODB_URI);
-    const results = await db.collection('events').find({}).toArray();
+    const findQuery = next ? { _id: { $lt: new ObjectId(next) } } : {};
+
+    const results = await db.collection('events').find(findQuery).sort({ _id: -1 }).limit(limit).toArray();
+
+    const nextNext = results.length > 0 ? results[results.length - 1]._id : null;
+
     return {
       statusCode: 200,
+      headers: { "X-Pagination-Next" : nextNext },
       body: JSON.stringify(results),
     };
 
