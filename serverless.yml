@@ -4,6 +4,7 @@ provider:
   name: aws
   runtime: nodejs12.x
   region: us-east-1
+  versionFunctions: false
   environment:
     MONGODB_URI: ${env:MONGODB_URI}
 
