@@ -2,7 +2,7 @@ import { APIGatewayProxyHandler, ScheduledHandler } from 'aws-lambda';
 
 import { MongoClient, Db, ObjectId } from 'mongodb';
 import axios from 'axios';
-import { addDays, format, parseISO } from 'date-fns';
+import { addMonths, endOfMonth, format, parseISO, startOfMonth } from 'date-fns';
 import { createHash } from 'crypto';
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -75,7 +75,7 @@ export const list: APIGatewayProxyHandler = async (event, context) => {
 
 function getLimit(queryStringParameters: { [name: string]: string } | null) {
   if (queryStringParameters == null || !queryStringParameters.limit) return LIMIT_DEFAULT;
-  
+
   let limit = +(queryStringParameters.limit || LIMIT_DEFAULT);
   limit = Math.min(Math.max(LIMIT_MIN, limit), LIMIT_MAX);
 
@@ -91,9 +91,9 @@ function getFilter(queryStringParameters: { [name: string]: string } | null) {
   let id = null;
   let date = null;
 
-  try{
+  try {
     date = new Date(+nextStartDate);
-  } catch(e) { 
+  } catch (e) {
     throw new Error('Bad Start Date ' + nextStartDate)
   }
   try {
@@ -152,10 +152,21 @@ export interface ICrawler {
 
 export class MercerCountyParkCrawler implements ICrawler {
   async crawl() {
+    const items: OSEventsEvent[] = [];
     const today = new Date();
+
+    for (let i = 0; i < 12; i++) {
+      const newItems = await this.getItemsForMonth(addMonths(today, i));
+      items.push(...newItems);
+    }
+
+    return items;
+  }
+
+  private async getItemsForMonth(date: Date) {
     const body = {
-      'start_date': format(today, 'yyyy-MM-dd'),
-      'end_date': format(addDays(today, 30), 'yyyy-MM-dd')
+      'start_date': format(startOfMonth(date), 'yyyy-MM-dd'),
+      'end_date': format(endOfMonth(date), 'yyyy-MM-dd')
     };
 
     const url = 'https://mercercountyparks.org/api/events-by-date/list/';
