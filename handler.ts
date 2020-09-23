@@ -2,7 +2,7 @@ import { APIGatewayProxyHandler, ScheduledHandler } from 'aws-lambda';
 
 import { MongoClient, Db, ObjectId } from 'mongodb';
 import axios from 'axios';
-import { addMonths, endOfMonth, format, parseISO, startOfMonth } from 'date-fns';
+import { addMonths, endOfMonth, format, parseISO, startOfDay, startOfMonth } from 'date-fns';
 import { createHash } from 'crypto';
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -32,7 +32,7 @@ export const list: APIGatewayProxyHandler = async (event, context) => {
 
     const filter = getFilter(event.queryStringParameters);
     const limit = getLimit(event.queryStringParameters);
-    const sort = { startDate: -1, _id: -1 };
+    const sort = { startDate: 1, _id: 1 };
 
     const db = await connectToDatabase(MONGODB_URI);
 
@@ -83,10 +83,12 @@ function getLimit(queryStringParameters: { [name: string]: string } | null) {
 }
 
 function getFilter(queryStringParameters: { [name: string]: string } | null) {
-  if (queryStringParameters == null || !queryStringParameters.next) return {};
+  const today = new Date();
+
+  if (queryStringParameters == null || !queryStringParameters.next) return {startDate: { $gt: startOfDay(today) }};
 
   const [nextStartDate, nextId] = queryStringParameters.next.split('_');
-  if (!nextStartDate || !nextId) return {};
+  if (!nextStartDate || !nextId) return {startDate: { $gt: startOfDay(today) }};
 
   let id = null;
   let date = null;
@@ -104,11 +106,11 @@ function getFilter(queryStringParameters: { [name: string]: string } | null) {
 
   const filter = {
     $or: [{
-      startDate: { $lt: date }
+      startDate: { $gt: date }
     }, {
       // If the startDate is an exact match, we need a tiebreaker, so we use the _id field from the cursor.
       startDate: date,
-      _id: { $lt: id }
+      _id: { $gt: id }
     }]
   };
 
