@@ -4,6 +4,8 @@ import { MongoClient, Db, ObjectId } from 'mongodb';
 import axios from 'axios';
 import { addMonths, endOfMonth, format, parseISO, startOfDay, startOfMonth } from 'date-fns';
 import { createHash } from 'crypto';
+var jsonpClient = require('jsonp-client');
+
 
 const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) console.error('MONGODB_URI NOT SET');
@@ -85,10 +87,10 @@ function getLimit(queryStringParameters: { [name: string]: string } | null) {
 function getFilter(queryStringParameters: { [name: string]: string } | null) {
   const today = new Date();
 
-  if (queryStringParameters == null || !queryStringParameters.next) return {startDate: { $gt: startOfDay(today) }};
+  if (queryStringParameters == null || !queryStringParameters.next) return { startDate: { $gt: startOfDay(today) } };
 
   const [nextStartDate, nextId] = queryStringParameters.next.split('_');
-  if (!nextStartDate || !nextId) return {startDate: { $gt: startOfDay(today) }};
+  if (!nextStartDate || !nextId) return { startDate: { $gt: startOfDay(today) } };
 
   let id = null;
   let date = null;
@@ -128,7 +130,7 @@ export const crawl: ScheduledHandler = async (_event, context) => {
   try {
     context.callbackWaitsForEmptyEventLoop = false;
 
-    const crawlers: ICrawler[] = [new MercerCountyParkCrawler()];
+    const crawlers: ICrawler[] = [new NewHopeWineryCrawler()];
     const crawlPromises = crawlers.map(crawler => crawler.crawl()).flat();
     const items = (await Promise.all(crawlPromises)).flat();
 
@@ -203,6 +205,50 @@ export class MercerCountyParkCrawler implements ICrawler {
 
     return item;
   }
+}
+
+export class NewHopeWineryCrawler implements ICrawler {
+  async crawl(): Promise<OSEventsEvent[]> {
+    const timestamp = new Date().getTime();
+    const url = `http://newhopewinery.com/calendar/action~stream/request_format~json/?request_type=jsonp&ai1ec_doing_ajax=true&_=${timestamp}`;
+
+    jsonpClient(url, (err, data: NewHopeWineryResponse) => {
+      if (err) {
+        console.error(err.message);
+      } else {
+        const dates = Object.keys(data.html.dates);
+        
+        console.log(data.html.dates[dates[0]].events.notallday[0]);
+      }
+    });
+
+    return [];
+  }
+
+}
+
+export interface NewHopeWineryResponse {
+  html: {
+    dates: {
+      [date: string]: {
+        events: {
+          allday: {}[];
+          notallday: {
+            filtered_title: string; // SOLD OUT-Raul Malo (Saturday Show) Live at The New Hope Winery
+            venue: string;
+            ticket_url: string;
+            permalink: string; // http://newhopewinery.com/event/raul-malo-2nd-saturday-show-live-at-the-new-hope-winery-2/?instance_id=114
+            avatar_url: string; // http://newhopewinery.com/wp-content/uploads/2019/12/Raul-Malo-300x202.jpg
+            short_start_time: string; // 8:00 pm
+            timespan_short: string; // "Oct 3 @ 8:00 pm – 10:00 pm"
+          }[];
+        };
+        day: string; // 3
+        full_month: string; // October
+        year: string; // 2020
+      }
+    }
+  };
 }
 
 export interface OSEventsEvent {
