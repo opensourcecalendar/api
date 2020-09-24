@@ -14,22 +14,26 @@ plugins:
   - serverless-domain-manager # https://seed.run/blog/how-to-set-up-a-custom-domain-name-for-api-gateway-in-your-serverless-app.html
 
 functions:
-  list:
-    handler: handler.list
+  listApi:
+    handler: src/api.list
     events:
       - http:
           path: events
           method: get
           cors: true
+  crawlApi:
+    handler: src/api.crawl
+    timeout: 600, # 10 minutes
+    events:
+      - http:
+          path: crawl
+          method: post
+          cors: true
   crawl:
-    handler: handler.crawl
+    handler: src/crawl.crawl
     timeout: 600, # 10 minutes
     events:
       - schedule: rate(10080 minutes)
-      - http:
-          path: crawl
-          method: get
-          cors: true
 
 custom:
   customDomain:
