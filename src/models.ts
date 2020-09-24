@@ -9,4 +9,5 @@ export interface OSEventsEvent {
   location: string;
   locationCoord: number[];
   hash?: string;
+  crawlerName: string;
 }

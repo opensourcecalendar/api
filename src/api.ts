@@ -56,7 +56,7 @@ export const list: APIGatewayProxyHandler = async (event, context) => {
   }
 };
 
-export const crawl: APIGatewayProxyHandler = async (event, context) =>{
+export const crawl: APIGatewayProxyHandler = async (event, context) => {
   try {
     context.callbackWaitsForEmptyEventLoop = false;
 
@@ -65,8 +65,60 @@ export const crawl: APIGatewayProxyHandler = async (event, context) =>{
     const crawler = new Crawler();
     await crawler.crawl(crawlerName);
 
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ status: 'COMPLETED' }, null, 2),
+    };
+
   } catch (e) {
-    console.error('unhandled error', e);
+    console.error('=> unhandled error', JSON.stringify(e));
+    return {
+      statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Credentials': true
+      },
+      body: JSON.stringify({
+        error: e,
+        message: 'unhandled error'
+      })
+    };
+  }
+};
+
+export const cleanup: APIGatewayProxyHandler = async (event, context) => {
+  try {
+    context.callbackWaitsForEmptyEventLoop = false;
+
+    const qs = event.queryStringParameters || {};
+    const crawlerName = (qs.crawler || '').toLowerCase().trim();
+
+    if (crawlerName === '') {
+      console.log(`No crawlers specified`);
+      return;
+    } else if (crawlerName === 'all') {
+      console.warn(`Massive cleanup`);
+    }
+
+    const crawler = new Crawler();
+    const crawlers = crawler.getCrawlers(crawlerName);
+    if (crawlers.length === 0) {
+      console.warn(`No crawlers with name: ${crawlerName}`);
+      return;
+    }
+
+    const deleteStatement = crawlerName === 'all' ? {} : { crawlerName: crawlerName };
+
+    const db = await connectToDatabase();
+    await db.collection<OSEventsEvent>('events').deleteMany(deleteStatement);
+
+    return {
+      statusCode: 204,
+      body: ''
+    };
+
+  } catch (e) {
+    console.error('=> unhandled error', JSON.stringify(e));
     return {
       statusCode: 500,
       headers: {

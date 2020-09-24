@@ -21,6 +21,14 @@ functions:
           path: events
           method: get
           cors: true
+  # Dont expose cleanup through api
+  # cleanupApi:
+  #   handler: src/api.cleanup
+  #   events:
+  #     - http:
+  #         path: cleanup
+  #         method: delete
+  #         cors: true
   crawlApi:
     handler: src/api.crawl
     timeout: 600, # 10 minutes

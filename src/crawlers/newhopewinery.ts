@@ -5,6 +5,8 @@ import { OSEventsEvent } from "../models";
 import { ICrawler } from "./crawler";
 
 export class NewHopeWineryCrawler implements ICrawler {
+  crawlerName = 'newhopewinery';
+
   async crawl(): Promise<OSEventsEvent[]> {
     const timestamp = new Date().getTime();
     const url = `http://newhopewinery.com/calendar/action~stream/request_format~json/?request_type=jsonp&ai1ec_doing_ajax=true&_=${timestamp}`;
@@ -42,6 +44,7 @@ export class NewHopeWineryCrawler implements ICrawler {
 
   private map(startDate: Date, event: NewHopeWineryNotAllDayEvent): OSEventsEvent {
     const item: OSEventsEvent = {
+      crawlerName: this.crawlerName,
       startDate,
       endDate: null,
       title: event.filtered_title,

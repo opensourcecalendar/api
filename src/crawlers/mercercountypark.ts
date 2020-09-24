@@ -6,6 +6,8 @@ import { OSEventsEvent } from "../models";
 import { ICrawler } from "./crawler";
 
 export class MercerCountyParkCrawler implements ICrawler {
+  crawlerName = 'newhopewinery';
+
   async crawl() {
     const items: OSEventsEvent[] = [];
     const today = new Date();
@@ -37,6 +39,7 @@ export class MercerCountyParkCrawler implements ICrawler {
 
   private map(obj: MercerCountyParkEvent): OSEventsEvent {
     const item: OSEventsEvent = {
+      crawlerName: this.crawlerName,
       startDate: parseISO(obj.start_datetime),
       endDate: parseISO(obj.end_datetime),
       title: obj.title,
