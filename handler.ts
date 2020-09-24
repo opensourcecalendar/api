@@ -176,10 +176,10 @@ export class MercerCountyParkCrawler implements ICrawler {
     const response = await axios.post<MercerCountParkResponse>(url, body);
 
     const items = Object.keys(response.data.results.events_by_date)
-      .map(c => response.data.results.events_by_date[c].map(obj => this.map(obj)));
+      .map(c => response.data.results.events_by_date[c].map(obj => this.map(obj)))
+      .flat();
 
-    const flattedItems = items.flat();
-    return flattedItems;
+    return items;
   }
 
   private map(obj: MercerCountyParkEvent): OSEventsEvent {
@@ -235,7 +235,7 @@ export class NewHopeWineryCrawler implements ICrawler {
 
   private getDate(monthName: string, date: number, year: number) {
     const months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
-    const index = months.indexOf(monthName);
+    const index = months.indexOf(monthName.toLowerCase());
 
     const month = index >= 0 ? index : 0;
     return new Date(year, month, date);
