@@ -21,7 +21,7 @@ export class Crawler {
     }
 
     let items = (await Promise.all(crawlers.map(crawler => crawler.crawl()).flat())).flat();
-    items = (await Promise.all(items.filter((_item, index) => index == 5 || index == 6).map(item => this.addImageUrlToItem(item))));
+    items = (await Promise.all(items.map(item => this.addImageUrlToItem(item))));
 
     console.log(`=> Saving ${items.length} items`);
     const db = await connectToDatabase();
