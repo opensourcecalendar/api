@@ -6,7 +6,7 @@ import { OSEventsEvent } from "../models";
 import { ICrawler } from "./crawler";
 
 export class MercerCountyParkCrawler implements ICrawler {
-  crawlerName = 'newhopewinery';
+  crawlerName = 'mercercountypark';
 
   async crawl() {
     const items: OSEventsEvent[] = [];
