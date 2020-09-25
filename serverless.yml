@@ -8,6 +8,11 @@ provider:
   environment:
     MONGODB_URI: ${env:MONGODB_URI}
     S3_IMAGE_BUCKET: ${env:S3_IMAGE_BUCKET}
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+       - s3:PutObject
+      Resource: "arn:aws:s3:::osevents-images/*"
 
 plugins:
   - serverless-plugin-typescript 
